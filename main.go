@@ -77,15 +77,9 @@ func getServerPublicKey(env Env) (*rsa.PublicKey, error) {
 	}
 
 	// Parse the bytes into a PKIXPublicKey structure
-	clientPublicKeyInterface, err := x509.ParsePKIXPublicKey(clientPublicKeyBytes)
+	clientPublicKey, err := x509.ParsePKCS1PublicKey(clientPublicKeyBytes)
 	if err != nil {
 		return nil, fmt.Errorf("Error when parsing PKIXPublicKey: %s", err.Error())
-	}
-
-	// Cast the PKIXPublicKey structure to type *rsa.PublicKey
-	clientPublicKey, ok := clientPublicKeyInterface.(*rsa.PublicKey)
-	if !ok {
-		return nil, fmt.Errorf("The ClientPublicKey key is not an RSA key")
 	}
 
 	// Return *rsa.PublicKey
@@ -141,6 +135,8 @@ func Process(data Data, env Env) Result {
 	for k, v := range reqParams {
 		requestBody.Add(k, v)
 	}
+
+	fmt.Println("requestBody", requestBody)
 
 	serverRequest, err := http.NewRequest("POST", apiUrl, strings.NewReader(requestBody.Encode()))
 	if err != nil {
