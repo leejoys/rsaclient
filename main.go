@@ -248,6 +248,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	err = validateKeyPair(env)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	data := Data{
 		ID:   1,
 		Text: "soME text",
@@ -282,4 +287,47 @@ func readEnv() (Env, error) {
 
 	// Return the Env variable
 	return env, nil
+}
+
+func validateKeyPair(env Env) error {
+
+	// Decode the string env.PrivateKey from base64 to bytes
+	privateKeyBytes, err := base64.StdEncoding.DecodeString(env.PrivateKey)
+	if err != nil {
+		return fmt.Errorf("Error when decoding the PrivateKey string: %s", err.Error())
+	}
+
+	// Decode the string env.ClientPublicKey from base64 to bytes
+	PublicKeyBytes, err := base64.StdEncoding.DecodeString(env.PublicKey)
+	if err != nil {
+		return fmt.Errorf("Error when decoding the PublicKey string: %s", err.Error())
+	}
+
+	// Decode the string env.ServerPublicKey from base64 to bytes
+	serverPublicKeyBytes, err := base64.StdEncoding.DecodeString(env.ServerPublicKey)
+	if err != nil {
+		return fmt.Errorf("Error when decoding the ClientPublicKey string: %s", err.Error())
+	}
+
+	priv, err := x509.ParsePKCS1PrivateKey(privateKeyBytes)
+	if err != nil {
+		return fmt.Errorf("Error when parsing the PrivateKey bytes: %s", err.Error())
+	}
+
+	pub, err := x509.ParsePKCS1PublicKey(PublicKeyBytes)
+	if err != nil {
+		return fmt.Errorf("Error when parsing the PublicKey string: %s", err.Error())
+	}
+
+	serverPub, err := x509.ParsePKCS1PublicKey(serverPublicKeyBytes)
+	if err != nil {
+		return fmt.Errorf("Error when parsing the ClientPublicKey string: %s", err.Error())
+	}
+
+	// Сравниваем публичные ключи с теми, которые можно получить из приватных ключей
+	if !(priv.PublicKey.Equal(pub) && !pub.Equal(serverPub)) {
+		return fmt.Errorf("!(priv.PublicKey.Equal(pub) && !pub.Equal(serverPub))")
+	}
+
+	return nil
 }
